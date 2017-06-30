@@ -11,10 +11,15 @@ class Edges {
   T[][] edges = null;
   int size = 0;
   
-  Edges(int numberOfVertexes){
+  Edges(int numberOfVertexes) {
     if( numberOfVertexes > 0 ) {
       size = numberOfVertexes;
       edges = new T[size][size];
+      for(int i = 0; i < size; ++i) {
+        for(int j = 0; j < size; ++j) {
+          edges[i][j] = new T();
+        }
+      }
     }
     //catch Exception
   }
