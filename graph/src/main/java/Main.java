@@ -3,42 +3,43 @@ import javafx.scene.Scene;
 import javafx.scene.paint.Color; 
 import javafx.application.Application;
 
-import graph.Visualization;
+import graph.VisualGraph;
 
 public class Main  extends Application {
 
-  @Override 
-  public void start(Stage stage) {
-    Visualization g = new Visualization();
-  
-    g.setVertex(0,100,350);
-    g.setVertex(1,100,50);
-    g.setVertex(2,220,290);
-    g.setVertex(3,500,350);
-    g.setVertex(4,300,70);
+  private void init(Stage primaryStage) {
+    VisualGraph graph = new VisualGraph(8);
+	    
+    graph.addVertex(Color.CORAL,      15, 250, 150, 1);
+    graph.addVertex(Color.DODGERBLUE, 15, 250, 250, 2);
+    graph.addVertex(Color.GREEN,      15, 150, 250, 3);
+    graph.addVertex(Color.MAGENTA,    15, 350, 150, 4);
+    graph.addVertex(Color.BLACK,      15, 450, 150, 5);
+    graph.addVertex(Color.RED,        15, 150, 350, 6);
+    graph.addVertex(Color.YELLOW,     15, 150, 450, 7);
+	
+    graph.addEdge(1,2, 8);
+    graph.addEdge(2,3, 8);
+    graph.addEdge(3,4, 8);
+    graph.addEdge(4,1, 8);
 
-    g.setEdge(1,0, 15);
-    g.setEdge(2,0, 15);
-    g.setEdge(3,0, 15);
-    g.setEdge(4,0, 15);
+    graph.addEdge(3,5, 10);
+    graph.addEdge(4,6, 10);
+    graph.addEdge(7,6, 10);
 
-    g.setEdge(2,1, 20);
-    g.setEdge(3,1, 20);
-    g.setEdge(4,1, 20);
-    
-    g.setEdge(3,2, 20);
-    g.setEdge(4,2, 20);
-    
-    g.setEdge(4,3, 30);
-    
-    Scene scene = new Scene(g.getRoot(), 1200, 700);  
-    stage.setTitle("Graph");
+    Scene scene = new Scene(graph.getRoot());
     scene.setFill(Color.SKYBLUE);
-    stage.setScene(scene);
-    stage.show();         
-  } 
-  
-   public static void main(String args[]){ 
-      launch(args); 
-   }
+    primaryStage.setScene(scene);
+    primaryStage.setResizable(false);
+
+  }
+  @Override
+  public void start(Stage primaryStage) throws Exception {
+    init(primaryStage);
+    primaryStage.show();
+  }
+
+  public static void main(String[] args) {
+    launch(args);
+  }
 } 
