@@ -26,6 +26,7 @@ public class Main  extends Application {
     graph.addEdge(3,5, 10);
     graph.addEdge(4,6, 10);
     graph.addEdge(7,6, 10);
+    graph.addGrid(500, 100, 5, 5, 40, 40);
 
     Scene scene = new Scene(graph.getRoot());
     scene.setFill(Color.SKYBLUE);

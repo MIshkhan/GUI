@@ -49,7 +49,39 @@ public class VisualGraph {
     else
       throw new IllegalArgumentException("Number of vertices in graph must be positive ...");
   }
-    
+
+  public void addGrid( double startX, double startY, int columnNumber, int rowNumber, double cellHeight, double cellWidth ) {
+    if( startX > 0 && startY > 0 && cellHeight > 0 & cellWidth > 0 ) {
+      //rows
+      double endX = startX + (columnNumber - 1) * cellWidth;
+      for( int i = 0; i < columnNumber; ++i ) {
+        double y = startY + i * cellHeight; 
+        root.getChildren().add(new Line(startX, y, endX, y));
+      }
+      //columns
+      double endY = startY + (rowNumber - 1) * cellHeight;
+      for( int i = 0; i < rowNumber; ++i ) {
+        double x = startX + i * cellWidth;
+        root.getChildren().add(new Line(x, startY, x, endY));
+      }
+
+      //vertices on grid
+      double radius = cellWidth / 5;
+      for( int i = 0; i < columnNumber; ++i ) {
+        double y = startY + i * cellHeight;
+        for( int j = 0; j < rowNumber; ++j ) {
+          double x = startX + j * cellWidth;
+           Circle circle = new Circle(x, y, radius);
+           circle.setFill(Color.WHITE);
+           root.getChildren().add(circle);
+        }
+      }
+      
+    }
+    else
+      throw new IllegalArgumentException("Wrong arguments for method ...");
+  }
+  
   public void addEdge(int v1, int v2, double weight) {
     graph.addEdge(v1, v2 , weight);
     
