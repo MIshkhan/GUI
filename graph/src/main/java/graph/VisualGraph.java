@@ -31,11 +31,8 @@ public class VisualGraph {
     
   //create a rectangle - (450px X 250px) in which our circles can move
   final Rectangle rectangle = RectangleBuilder.create()
-  .width(1100).height(700)
-    .fill(new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE, new Stop[]{
-    	  new Stop(1, Color.rgb(156, 216, 255)),
-    	  new Stop(0, Color.rgb(156, 216, 255, 0.5))
-    	}))
+  .width(1500).height(800)
+    .fill(Color.SKYBLUE)
     .stroke(Color.BLACK)
     .build();
 
@@ -49,44 +46,13 @@ public class VisualGraph {
     else
       throw new IllegalArgumentException("Number of vertices in graph must be positive ...");
   }
-
-  public void addGrid( double startX, double startY, int columnNumber, int rowNumber, double cellHeight, double cellWidth ) {
-    if( startX > 0 && startY > 0 && cellHeight > 0 & cellWidth > 0 ) {
-      //rows
-      double endX = startX + (columnNumber - 1) * cellWidth;
-      for( int i = 0; i < columnNumber; ++i ) {
-        double y = startY + i * cellHeight; 
-        root.getChildren().add(new Line(startX, y, endX, y));
-      }
-      //columns
-      double endY = startY + (rowNumber - 1) * cellHeight;
-      for( int i = 0; i < rowNumber; ++i ) {
-        double x = startX + i * cellWidth;
-        root.getChildren().add(new Line(x, startY, x, endY));
-      }
-
-      //vertices on grid
-      double radius = cellWidth / 5;
-      for( int i = 0; i < columnNumber; ++i ) {
-        double y = startY + i * cellHeight;
-        for( int j = 0; j < rowNumber; ++j ) {
-          double x = startX + j * cellWidth;
-           Circle circle = new Circle(x, y, radius);
-           circle.setFill(Color.WHITE);
-           root.getChildren().add(circle);
-        }
-      }
-      
-    }
-    else
-      throw new IllegalArgumentException("Wrong arguments for method ...");
-  }
-  
+    
   public void addEdge(int v1, int v2, double weight) {
     graph.addEdge(v1, v2 , weight);
     
     Line link = new Line();
-    link.setFill(Color.RED);
+    link.setFill(Color.BLACK);
+    link.setStroke(Color.BLACK);
     link.setStrokeWidth(5);
 	
     link.startXProperty().bind(vertices[v1].centerXProperty());
@@ -95,7 +61,7 @@ public class VisualGraph {
     link.endYProperty().bind(vertices[v2].centerYProperty());
 
     root.getChildren().add(link);
-    link.toBack();
+    //link.toBack();
 
     Text text = new Text( String.valueOf(weight) );
     text.xProperty().bind((vertices[v1].centerXProperty().add(vertices[v2].centerXProperty()).divide(2).add(5)));
@@ -104,7 +70,7 @@ public class VisualGraph {
     
   }
 
-  public void addVertex(final Color color, int radius, int x, int y, int index) {
+  public void addVertex(final Color color, double radius, double x, double y, int index) {
     
     graph.addVertex(index);
     //create a circle with desired name,  color and radius
@@ -119,7 +85,6 @@ public class VisualGraph {
     circle.setEffect(new InnerShadow(7, color.darker().darker()));
     //change a cursor when it is over circle
     circle.setCursor(Cursor.HAND);
-	
     circle.setOnMouseDragged(new EventHandler<MouseEvent>() {
 	public void handle(MouseEvent me) {
 	  double dragX = me.getSceneX();
@@ -152,7 +117,7 @@ public class VisualGraph {
 	
     vertices[index] = circle;
 
-    Text text = new Text("V"+index);
+    Text text = new Text("" + index);
     text.xProperty().bind(vertices[index].centerXProperty().add(circle.getRadius()));
     text.yProperty().bind(vertices[index].centerYProperty().add(circle.getRadius()));
 
