@@ -1,7 +1,7 @@
 //yaourt openjfx
 
-// https://mvnrepository.com/artifact/jgraph/jgraph
-libraryDependencies += "jgraph" % "jgraph" % "5.13.0.0"
+//umanagedJars in Compile += file("lib/jfxrt.jar")
+unmanagedJars in Compile += Attributed.blank(
+  file(System.getenv("JAVA_HOME") + "/jre/lib/jfxrt.jar"))
 
-// https://mvnrepository.com/artifact/org.jgrapht/jgrapht-jdk1.5
-libraryDependencies += "org.jgrapht" % "jgrapht-jdk1.5" % "0.7.3"
+fork in run := true
