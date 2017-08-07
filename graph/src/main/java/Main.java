@@ -24,12 +24,10 @@ public class Main  extends Application {
         Parent zoomPane =  grid.createZoomPane();
 
         VBox layout = new VBox();
-
         layout.getChildren().setAll(zoomPane);
-
         VBox.setVgrow(zoomPane, Priority.ALWAYS);
 
-        Scene scene = new Scene(layout, grid.getWidth(), grid.getHeight());
+        Scene scene = new Scene(layout, grid.getWindowWidth(), grid.getWindowHeight());
         scene.setFill(Color.SKYBLUE);
 
         stage.setScene(scene);
