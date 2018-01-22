@@ -8,6 +8,7 @@ import javafx.scene.shape.*;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
+import javafx.scene.Node;
 
 import javafx.event.*;
 import javafx.beans.value.*;
@@ -16,6 +17,8 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
 
 import javafx.application.Platform;
+
+import javafx.collections.ObservableList;
 
 import java.util.ArrayList;
 
@@ -41,7 +44,7 @@ public class Grid {
   private GridPane daddy = new GridPane();
 
   private ArrayList<Integer>[] verticies = new ArrayList[ROW_NUMBER];
-    
+  
   public Grid() {
     for(int i = 0; i < ROW_NUMBER; ++i) 
       verticies[i] = new ArrayList<Integer>();
@@ -137,14 +140,26 @@ public class Grid {
     Button clearButton = new Button("Clean grid");
 
     clearButton.setOnAction((event) -> {
+        ObservableList<Node> children = root.getChildren();
+        
         for(int y = 0; y < verticies.length; ++y) {
           for(Integer x: verticies[y])
-            ((Circle)root.getChildren().get(y * COLUMN_NUMBER + (int)x)).setFill(Color.WHITE);
+            ((Circle)children.get(y * COLUMN_NUMBER + (int)x)).setFill(Color.WHITE);
           verticies[y].clear();
         }
+
+        // recoloring striner points white 
+        for(Point p: FileIO.readPoints("./steiner-points.txt"))
+          ((Circle)children.get(p.y * COLUMN_NUMBER + p.x)).setFill(Color.WHITE);
+        
+        // case when contains circles and something else -> remove somthing
+        if(children.size() > ROW_NUMBER * COLUMN_NUMBER)
+          children.remove(ROW_NUMBER * COLUMN_NUMBER, children.size());
         
         FileIO.cleanFile();
-        System.out.println("tring to erase file...");
+        FileIO.cleanFile("./steiner-points.txt");
+        FileIO.cleanFile("./mst-edges.txt");
+        // System.out.println("tring to erase file...");
     });
     
     header.add(getMenuBar(), 0, 0);
@@ -222,24 +237,11 @@ public class Grid {
           String name = ((MenuItem)ae.getTarget()).getText();
           switch (name) {
           case "Sky-blue" : zoomPane.setStyle("-fx-background-color: #87CEEB"); break;
-          case "Green" : zoomPane.setStyle("-fx-background-color: #669994"); break;
-          case "Black" : zoomPane.setStyle("-fx-background-color: #242020"); break;
-          case "Open"  : // for(Point p: FileIO.readPoints()) addVertex(p.x, p.y);
-            break;
-          case "Steiner" : FileIO.writePoints(getPoints());
-            try {
-              Process process = Runtime.getRuntime().exec("./flute-run.sh");
-              ArrayList<Point> sPoints = FileIO.readPoints("./steiner-points.txt");
-
-              for(Point sp: sPoints)
-                ((Circle)root.getChildren().get( sp.y * COLUMN_NUMBER + sp.x)).setFill(Color.RED);
-
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            
-            /*some c++ action*/ break;
-          case "Exit": Platform.exit();
+          case "Green"    : zoomPane.setStyle("-fx-background-color: #669994"); break;
+          case "Black"    : zoomPane.setStyle("-fx-background-color: #242020"); break;
+          case "Open"     : // for(Point p: FileIO.readPoints()) addVertex(p.x, p.y); break;
+          case "Steiner"  : runSteiner(); break; 
+          case "Exit"     : Platform.exit();
           }
         }
       };
@@ -255,6 +257,49 @@ public class Grid {
     return  rootNode;
   }
 
+  public void runSteiner() {
+    try {
+      FileIO.writePoints(getPoints());
+      Process process = Runtime.getRuntime().exec("./flute-run.sh");
+      
+      while(process.isAlive()) {
+        System.out.println("------");
+        Thread.sleep(50);
+      }
+      ArrayList<Point> sPoints = FileIO.readPoints("./steiner-points.txt");
+      ArrayList<Point> mstEdges = FileIO.readPoints("./mst-edges.txt");
+
+      for(int i = 0; i < mstEdges.size(); i += 2) {
+        Point start = mstEdges.get(i);
+        Point end = mstEdges.get(i+1);
+                
+        start.x *= CELL_WIDTH;
+        start.y *= CELL_HEIGHT;
+        end.x *= CELL_WIDTH;
+        end.y *= CELL_HEIGHT;
+                
+        if(start.x == end.x) {
+          if(start.y == end.y)
+            continue;
+          root.getChildren().add(new Line(start.x, start.y, end.x, end.y));
+        } else {
+          if(start.y == end.y)
+            root.getChildren().add(new Line(start.x, start.y, end.x, end.y));
+          else {
+            root.getChildren().add(new Line(start.x, start.y, start.x, end.y));
+            root.getChildren().add(new Line(end.x, end.y, start.x, end.y));
+          }
+        }
+      }
+
+      for(Point sp: sPoints)
+        ((Circle)root.getChildren().get( sp.y * COLUMN_NUMBER + sp.x)).setFill(Color.RED);
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+  
   public ArrayList<Point> getPoints() {
     ArrayList<Point> points = new ArrayList<>();
     
@@ -265,7 +310,6 @@ public class Grid {
 
     return points;
   }
-
   
   public void addVertex(int x, int y) {
     verticies[y].add(x);
