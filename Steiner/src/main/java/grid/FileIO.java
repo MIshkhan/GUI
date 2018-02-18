@@ -8,8 +8,9 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 
+import java.util.Set;
 import java.util.ArrayList;
-  
+
 public class FileIO {
   private static String FILE_PATH = "./vertices.txt";
 
@@ -18,6 +19,10 @@ public class FileIO {
   }
 
   public static void writePoints(ArrayList<Point> points) {
+    writePoints(FILE_PATH, points);
+  }
+
+  public static void writePoints(Set<String> points) {
     writePoints(FILE_PATH, points);
   }
     
@@ -48,6 +53,15 @@ public class FileIO {
     try (FileWriter fw = new FileWriter(filePath); BufferedWriter bw = new BufferedWriter(fw)) {
       for(Point p: points)
         bw.write(p.x + " " + p.y + "\n");
+    } catch (IOException e) {
+      e.printStackTrace();
+    } 
+  }
+
+  public static void writePoints(String filePath, Set<String> points) {
+    try (FileWriter fw = new FileWriter(filePath); BufferedWriter bw = new BufferedWriter(fw)) {
+      for(String p: points)
+        bw.write(p + "\n");
     } catch (IOException e) {
       e.printStackTrace();
     } 

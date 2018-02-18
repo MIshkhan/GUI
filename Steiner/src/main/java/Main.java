@@ -29,13 +29,13 @@ public class Main  extends Application {
 
         Scene scene = new Scene(layout, grid.getWindowWidth(), grid.getWindowHeight());
         scene.setFill(Color.SKYBLUE);
-
+        
         stage.setScene(scene);
+        
         //stage.setResizable(false);
         stage.show();
-
-
     }
+  
     @Override
     public void start(Stage primaryStage) throws Exception {
         init(primaryStage);

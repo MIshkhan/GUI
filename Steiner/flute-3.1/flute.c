@@ -1453,8 +1453,8 @@ void printtree(Tree t)
     
     /*added*/
     FILE *f = fopen("../steiner-points.txt", "w");
-    for (i=t.deg; i<2*t.deg-2; i++)                           
-      fprintf(f, "%d %d\n", (int)t.branch[i].x, (int)t.branch[i].y);    
+    for (i=t.deg; i<2*t.deg-2; i++)
+      fprintf(f, "%d %d\n", (int)t.branch[i].x, (int)t.branch[i].y);
 
     fclose(f);
 }
@@ -1472,7 +1472,7 @@ void plottree(Tree t)
     /*added*/
     FILE *f = fopen("../mst-edges.txt", "w");
     for (i=0; i<2*t.deg-2; i++) {
-      fprintf(f, "%d %d\n", (int)t.branch[i].x, (int)t.branch[i].y);                                 
+      fprintf(f, "%d %d\n", (int)t.branch[i].x, (int)t.branch[i].y);
       fprintf(f, "%d %d\n", (int)t.branch[t.branch[i].n].x, (int)t.branch[t.branch[i].n].y);
     }
     

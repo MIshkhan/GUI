@@ -1,19 +1,25 @@
 package graph;
 
 import javafx.scene.*;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.*;
+import javafx.stage.Stage;
 
-import javafx.scene.control.*;
+import javafx.scene.shape.*;
+import javafx.scene.paint.Color;
+
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
-import javafx.scene.Node;
+import javafx.scene.control.*;
+
+import javafx.scene.chart.XYChart;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.CategoryAxis;
 
 import javafx.event.*;
 import javafx.beans.value.*;
 
 import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 
 import javafx.application.Platform;
@@ -21,6 +27,8 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 import java.io.*;
 
@@ -53,7 +61,6 @@ public class Grid {
 
     for(Point p: FileIO.readPoints())
       addVertex(p.x, p.y);
-    
   }
 
   private void makeGrid() {
@@ -139,28 +146,7 @@ public class Grid {
     GridPane footer = new GridPane();
     Button clearButton = new Button("Clean grid");
 
-    clearButton.setOnAction((event) -> {
-        ObservableList<Node> children = root.getChildren();
-        
-        for(int y = 0; y < verticies.length; ++y) {
-          for(Integer x: verticies[y])
-            ((Circle)children.get(y * COLUMN_NUMBER + (int)x)).setFill(Color.WHITE);
-          verticies[y].clear();
-        }
-
-        // recoloring striner points white 
-        for(Point p: FileIO.readPoints("./steiner-points.txt"))
-          ((Circle)children.get(p.y * COLUMN_NUMBER + p.x)).setFill(Color.WHITE);
-        
-        // case when contains circles and something else -> remove somthing
-        if(children.size() > ROW_NUMBER * COLUMN_NUMBER)
-          children.remove(ROW_NUMBER * COLUMN_NUMBER, children.size());
-        
-        FileIO.cleanFile();
-        FileIO.cleanFile("./steiner-points.txt");
-        FileIO.cleanFile("./mst-edges.txt");
-        // System.out.println("tring to erase file...");
-    });
+    clearButton.setOnAction((event) -> cleanGrid());
     
     header.add(getMenuBar(), 0, 0);
     footer.add(clearButton, 0, 0);
@@ -216,10 +202,10 @@ public class Grid {
     mb.getMenus().add(view);
 
     Menu run = new Menu("Run");
-    Menu algorithms = new Menu("Algorithms");
     MenuItem steiner = new MenuItem("Steiner");
-    algorithms.getItems().add(steiner);
-    run.getItems().add(algorithms);
+    MenuItem generator = new MenuItem("Generator");
+    MenuItem analyzer = new MenuItem("Analyzer");
+    run.getItems().addAll(steiner, generator, analyzer);
 
     mb.getMenus().add(run);
 
@@ -240,7 +226,9 @@ public class Grid {
           case "Green"    : zoomPane.setStyle("-fx-background-color: #669994"); break;
           case "Black"    : zoomPane.setStyle("-fx-background-color: #242020"); break;
           case "Open"     : // for(Point p: FileIO.readPoints()) addVertex(p.x, p.y); break;
-          case "Steiner"  : runSteiner(); break; 
+          case "Steiner"  : runSteiner(); break;
+          case "Generator": runGenerator(); break;
+          case "Analyzer" : runAnalyzer(); break; 
           case "Exit"     : Platform.exit();
           }
         }
@@ -252,7 +240,9 @@ public class Grid {
     green.setOnAction(MEHandler);
     skyBlue.setOnAction(MEHandler);
     steiner.setOnAction(MEHandler);
-    
+    analyzer.setOnAction(MEHandler);
+    generator.setOnAction(MEHandler);
+      
     rootNode.setTop(mb);
     return  rootNode;
   }
@@ -263,9 +253,9 @@ public class Grid {
       Process process = Runtime.getRuntime().exec("./flute-run.sh");
       
       while(process.isAlive()) {
-        System.out.println("------");
         Thread.sleep(50);
       }
+      
       ArrayList<Point> sPoints = FileIO.readPoints("./steiner-points.txt");
       ArrayList<Point> mstEdges = FileIO.readPoints("./mst-edges.txt");
 
@@ -299,6 +289,135 @@ public class Grid {
       e.printStackTrace();
     }
   }
+
+  public void runGenerator() {
+    FlowPane root = new FlowPane();
+    Stage stage = new Stage();
+    Scene scene = new Scene(root, 350, 100);
+    Label label = new Label("Vertices number:");
+    Spinner<Integer> spinner = new Spinner<Integer>(1, COLUMN_NUMBER * ROW_NUMBER, 120);
+    Button generateButton = new Button("Generate");
+      
+    generateButton.setOnAction((event) -> {
+        Integer numOfVertices = spinner.getValueFactory().getValue();
+        Set<String> points = new HashSet();
+        
+        for(int i = 0; i < numOfVertices; ++i) {
+          int randomX = 0 + (int) (Math.random() * COLUMN_NUMBER);
+          int randomY = 0 + (int) (Math.random() * ROW_NUMBER);
+          String point = randomX + " " + randomY;
+          
+          if(points.contains(point))
+            --i;
+          else
+            points.add(point);
+        }
+
+        cleanGrid();
+        FileIO.writePoints(points);
+        
+        for(Point p: FileIO.readPoints())
+          addVertex(p.x, p.y);
+
+        stage.close();
+      });
+    
+    generateButton.setTranslateX(120);
+    generateButton.setTranslateY(10);
+        
+    root.setHgap(30);
+    root.setVgap(10);
+    root.setPadding(new Insets(10));
+    root.getChildren().addAll(label, spinner, generateButton);
+
+    stage.setTitle("Vertex Generator");
+    stage.setScene(scene);
+    stage.setResizable(false);
+    stage.show();
+  }
+
+  public void runAnalyzer() {
+    FlowPane root = new FlowPane();
+    Stage stage = new Stage();
+    Scene scene = new Scene(root, 900, 450);
+    Label range = new Label("Range:");
+    Label step = new Label("Step:");
+    
+    Spinner<Integer> rangeSpinner = new Spinner<Integer>(2, COLUMN_NUMBER * ROW_NUMBER, 2);
+    Spinner<Integer> stepSpinner = new Spinner<Integer>(3, COLUMN_NUMBER * ROW_NUMBER, 3);
+    Button analyzeButton = new Button("Analyze");
+    
+    analyzeButton.setOnAction((event) -> {
+        // Integer numOfVertices = spinner.getValueFactory().getValue();
+        // Set<String> points = new HashSet();
+        
+        // for(int i = 0; i < numOfVertices; ++i) {
+        //   int randomX = 0 + (int) (Math.random() * COLUMN_NUMBER);
+        //   int randomY = 0 + (int) (Math.random() * ROW_NUMBER);
+        //   String point = randomX + " " + randomY;
+          
+        //   if(points.contains(point))
+        //     --i;
+        //   else
+        //     points.add(point);
+        // }
+
+        // cleanGrid();
+        // FileIO.writePoints(points);
+        
+        // for(Point p: FileIO.readPoints())
+        //   addVertex(p.x, p.y);
+
+        stage.close();
+      });
+
+    analyzeButton.setTranslateX(120);
+    analyzeButton.setTranslateY(250);
+    
+    range.setTranslateX(565);
+    range.setTranslateY(150);
+    rangeSpinner.setTranslateX(565);
+    rangeSpinner.setTranslateY(150);
+    
+    step.setTranslateX(300);
+    step.setTranslateY(200); 
+    stepSpinner.setTranslateX(300);
+    stepSpinner.setTranslateY(200);
+
+
+    CategoryAxis xAxis = new CategoryAxis();
+    NumberAxis yAxis = new NumberAxis();       
+    LineChart<String,Number> lineChart = new LineChart<String,Number>(xAxis,yAxis);
+                
+    //lineChart.setTitle("Time Monitoring");
+                                
+    XYChart.Series<String,Number> series = new XYChart.Series<String,Number>();
+        
+    series.getData().add(new XYChart.Data<String,Number>("Jan", 23));
+    series.getData().add(new XYChart.Data<String,Number>("Feb", 14));
+    series.getData().add(new XYChart.Data<String,Number>("Mar", 15));
+    series.getData().add(new XYChart.Data<String,Number>("Apr", 24));
+    series.getData().add(new XYChart.Data<String,Number>("May", 34));
+    series.getData().add(new XYChart.Data<String,Number>("Jun", 36));
+    series.getData().add(new XYChart.Data<String,Number>("Jul", 22));
+    series.getData().add(new XYChart.Data<String,Number>("Aug", 45));
+    series.getData().add(new XYChart.Data<String,Number>("Sep", 43));
+    series.getData().add(new XYChart.Data<String,Number>("Oct", 17));
+    series.getData().add(new XYChart.Data<String,Number>("Nov", 29));
+    series.getData().add(new XYChart.Data<String,Number>("Dec", 25));
+    series.setName("Time Monitoring");
+    lineChart.getData().add(series);
+       
+    root.setHgap(30);
+    root.setVgap(5);
+    root.setPadding(new Insets(10));
+    root.getChildren().addAll(range, rangeSpinner, step, stepSpinner, analyzeButton, lineChart);
+
+    stage.setTitle("Analyzer");
+    stage.setScene(scene);
+    stage.setResizable(false);
+    stage.show();
+  }
   
   public ArrayList<Point> getPoints() {
     ArrayList<Point> points = new ArrayList<>();
@@ -314,6 +433,28 @@ public class Grid {
   public void addVertex(int x, int y) {
     verticies[y].add(x);
     ((Circle)root.getChildren().get( y * COLUMN_NUMBER + x)).setFill(Color.BLACK);
+  }
+
+  public void cleanGrid() {
+    ObservableList<Node> children = root.getChildren();
+        
+    for(int y = 0; y < verticies.length; ++y) {
+      for(Integer x: verticies[y])
+        ((Circle)children.get(y * COLUMN_NUMBER + (int)x)).setFill(Color.WHITE);
+      verticies[y].clear();
+    }
+
+    // recoloring striner points white 
+    for(Point p: FileIO.readPoints("./steiner-points.txt"))
+      ((Circle)children.get(p.y * COLUMN_NUMBER + p.x)).setFill(Color.WHITE);
+        
+    // case when contains circles and something else -> remove somthing
+    if(children.size() > ROW_NUMBER * COLUMN_NUMBER)
+      children.remove(ROW_NUMBER * COLUMN_NUMBER, children.size());
+        
+    FileIO.cleanFile();
+    FileIO.cleanFile("./steiner-points.txt");
+    FileIO.cleanFile("./mst-edges.txt");
   }
   
   public double getWindowHeight() {
