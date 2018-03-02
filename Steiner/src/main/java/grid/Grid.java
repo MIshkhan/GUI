@@ -58,9 +58,9 @@ public class Grid {
       verticies[i] = new ArrayList<Integer>();
 
     makeGrid();
-
-    for(Point p: FileIO.readPoints())
-      addVertex(p.x, p.y);
+    
+    for(Tuple<Integer, Integer>p: FileIO.readPoints())
+      addVertex(p.k, p.v);
   }
 
   private void makeGrid() {
@@ -225,7 +225,7 @@ public class Grid {
           case "Sky-blue" : zoomPane.setStyle("-fx-background-color: #87CEEB"); break;
           case "Green"    : zoomPane.setStyle("-fx-background-color: #669994"); break;
           case "Black"    : zoomPane.setStyle("-fx-background-color: #242020"); break;
-          case "Open"     : // for(Point p: FileIO.readPoints()) addVertex(p.x, p.y); break;
+          case "Open"     : // for(Point p: FileIO.readPoints()) addVertex(p.k, p.v); break;
           case "Steiner"  : runSteiner(); break;
           case "Generator": runGenerator(); break;
           case "Analyzer" : runAnalyzer(); break; 
@@ -234,14 +234,10 @@ public class Grid {
         }
       };
 
-    open.setOnAction(MEHandler);
-    exit.setOnAction(MEHandler);
-    black.setOnAction(MEHandler);
-    green.setOnAction(MEHandler);
-    skyBlue.setOnAction(MEHandler);
-    steiner.setOnAction(MEHandler);
-    analyzer.setOnAction(MEHandler);
-    generator.setOnAction(MEHandler);
+    fileMenu.setOnAction(MEHandler);
+    backgrounds.setOnAction(MEHandler);
+    run.setOnAction(MEHandler);
+    helpMenu.setOnAction(MEHandler);
       
     rootNode.setTop(mb);
     return  rootNode;
@@ -256,34 +252,34 @@ public class Grid {
         Thread.sleep(50);
       }
       
-      ArrayList<Point> sPoints = FileIO.readPoints("./steiner-points.txt");
-      ArrayList<Point> mstEdges = FileIO.readPoints("./mst-edges.txt");
+      ArrayList<Tuple<Integer, Integer>> sPoints = FileIO.readPoints("./steiner-points.txt");
+      ArrayList<Tuple<Integer, Integer>> mstEdges = FileIO.readPoints("./mst-edges.txt");
 
       for(int i = 0; i < mstEdges.size(); i += 2) {
-        Point start = mstEdges.get(i);
-        Point end = mstEdges.get(i+1);
+        Tuple<Integer, Integer> start = mstEdges.get(i);
+        Tuple<Integer, Integer> end = mstEdges.get(i+1);
                 
-        start.x *= CELL_WIDTH;
-        start.y *= CELL_HEIGHT;
-        end.x *= CELL_WIDTH;
-        end.y *= CELL_HEIGHT;
+        start.k *= CELL_WIDTH;
+        start.v *= CELL_HEIGHT;
+        end.k *= CELL_WIDTH;
+        end.v *= CELL_HEIGHT;
                 
-        if(start.x == end.x) {
-          if(start.y == end.y)
+        if(start.k == end.k) {
+          if(start.v == end.v)
             continue;
-          root.getChildren().add(new Line(start.x, start.y, end.x, end.y));
+          root.getChildren().add(new Line(start.k, start.v, end.k, end.v));
         } else {
-          if(start.y == end.y)
-            root.getChildren().add(new Line(start.x, start.y, end.x, end.y));
+          if(start.v == end.v)
+            root.getChildren().add(new Line(start.k, start.v, end.k, end.v));
           else {
-            root.getChildren().add(new Line(start.x, start.y, start.x, end.y));
-            root.getChildren().add(new Line(end.x, end.y, start.x, end.y));
+            root.getChildren().add(new Line(start.k, start.v, start.k, end.v));
+            root.getChildren().add(new Line(end.k, end.v, start.k, end.v));
           }
         }
       }
 
-      for(Point sp: sPoints)
-        ((Circle)root.getChildren().get( sp.y * COLUMN_NUMBER + sp.x)).setFill(Color.RED);
+      for(Tuple<Integer, Integer> sp: sPoints)
+        ((Circle)root.getChildren().get( sp.v * COLUMN_NUMBER + sp.k)).setFill(Color.RED);
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -297,7 +293,9 @@ public class Grid {
     Label label = new Label("Vertices number:");
     Spinner<Integer> spinner = new Spinner<Integer>(1, COLUMN_NUMBER * ROW_NUMBER, 120);
     Button generateButton = new Button("Generate");
-      
+
+    spinner.setEditable(true);
+    
     generateButton.setOnAction((event) -> {
         Integer numOfVertices = spinner.getValueFactory().getValue();
         Set<String> points = new HashSet();
@@ -316,8 +314,8 @@ public class Grid {
         cleanGrid();
         FileIO.writePoints(points);
         
-        for(Point p: FileIO.readPoints())
-          addVertex(p.x, p.y);
+        for(Tuple<Integer, Integer> p: FileIO.readPoints())
+          addVertex(p.k, p.v);
 
         stage.close();
       });
@@ -337,100 +335,109 @@ public class Grid {
   }
 
   public void runAnalyzer() {
-    FlowPane root = new FlowPane();
-    Stage stage = new Stage();
-    Scene scene = new Scene(root, 900, 450);
-    Label range = new Label("Range:");
+    int x  = 550;
+    int dX = 150;
+    int y  = 150;
+    int dY = 33;
+    
+    Label rangeStartLabel = new Label("Range start:");
+    rangeStartLabel.setTranslateX(x);
+    rangeStartLabel.setTranslateY(y);
+
+    Spinner<Integer> rangeStart = new Spinner<Integer>(2, 10000, 2);
+    rangeStart.setTranslateX(x + dX);
+    rangeStart.setTranslateY(y);
+    rangeStart.setEditable(true);
+
+    Label rangeEndLabel = new Label("Range end:");
+    rangeEndLabel.setTranslateX(x);
+    rangeEndLabel.setTranslateY(y + dY);
+
+    Spinner<Integer> rangeEnd = new Spinner<Integer>(2, 10000, 2);
+    rangeEnd.setTranslateX(x + dX);
+    rangeEnd.setTranslateY(y + dY);
+    rangeEnd.setEditable(true);
+
     Label step = new Label("Step:");
-    
-    Spinner<Integer> rangeSpinner = new Spinner<Integer>(2, COLUMN_NUMBER * ROW_NUMBER, 2);
-    Spinner<Integer> stepSpinner = new Spinner<Integer>(3, COLUMN_NUMBER * ROW_NUMBER, 3);
+    step.setTranslateX(x);
+    step.setTranslateY(y + 2 * dY);
+
+    Spinner<Integer> stepSpinner = new Spinner<Integer>(10, 3000, 3);
+    stepSpinner.setTranslateX(x + dX);
+    stepSpinner.setTranslateY(y + 2 * dY);
+    stepSpinner.setEditable(true);
+
     Button analyzeButton = new Button("Analyze");
+    analyzeButton.setTranslateX(x + 1.32 * dX);
+    analyzeButton.setTranslateY(y + 3 * dY);
     
-    analyzeButton.setOnAction((event) -> {
-        // Integer numOfVertices = spinner.getValueFactory().getValue();
-        // Set<String> points = new HashSet();
-        
-        // for(int i = 0; i < numOfVertices; ++i) {
-        //   int randomX = 0 + (int) (Math.random() * COLUMN_NUMBER);
-        //   int randomY = 0 + (int) (Math.random() * ROW_NUMBER);
-        //   String point = randomX + " " + randomY;
-          
-        //   if(points.contains(point))
-        //     --i;
-        //   else
-        //     points.add(point);
-        // }
-
-        // cleanGrid();
-        // FileIO.writePoints(points);
-        
-        // for(Point p: FileIO.readPoints())
-        //   addVertex(p.x, p.y);
-
-        stage.close();
-      });
-
-    analyzeButton.setTranslateX(120);
-    analyzeButton.setTranslateY(250);
-    
-    range.setTranslateX(565);
-    range.setTranslateY(150);
-    rangeSpinner.setTranslateX(565);
-    rangeSpinner.setTranslateY(150);
-    
-    step.setTranslateX(300);
-    step.setTranslateY(200); 
-    stepSpinner.setTranslateX(300);
-    stepSpinner.setTranslateY(200);
-
-
     CategoryAxis xAxis = new CategoryAxis();
     NumberAxis yAxis = new NumberAxis();       
     LineChart<String,Number> lineChart = new LineChart<String,Number>(xAxis,yAxis);
-                
-    //lineChart.setTitle("Time Monitoring");
-                                
+                                               
     XYChart.Series<String,Number> series = new XYChart.Series<String,Number>();
-        
-    series.getData().add(new XYChart.Data<String,Number>("Jan", 23));
-    series.getData().add(new XYChart.Data<String,Number>("Feb", 14));
-    series.getData().add(new XYChart.Data<String,Number>("Mar", 15));
-    series.getData().add(new XYChart.Data<String,Number>("Apr", 24));
-    series.getData().add(new XYChart.Data<String,Number>("May", 34));
-    series.getData().add(new XYChart.Data<String,Number>("Jun", 36));
-    series.getData().add(new XYChart.Data<String,Number>("Jul", 22));
-    series.getData().add(new XYChart.Data<String,Number>("Aug", 45));
-    series.getData().add(new XYChart.Data<String,Number>("Sep", 43));
-    series.getData().add(new XYChart.Data<String,Number>("Oct", 17));
-    series.getData().add(new XYChart.Data<String,Number>("Nov", 29));
-    series.getData().add(new XYChart.Data<String,Number>("Dec", 25));
+
+    analyzeButton.setOnMousePressed(new EventHandler<MouseEvent>() {
+        public void handle(MouseEvent me) {
+          FileIO.cleanFile("./durations.txt");
+          series.getData().clear();
+            
+          Integer delta = stepSpinner.getValueFactory().getValue();
+          Integer rEnd = rangeEnd.getValueFactory().getValue();
+          Integer rStart = rangeStart.getValueFactory().getValue();
+
+          try {
+            for(; rStart <= rEnd; rStart += delta) {
+              System.out.println(rStart +  ":" + rEnd + ":" + delta);
+              Process process = Runtime.getRuntime().exec("./flute-time.sh " + rStart);
+              
+              while(process.isAlive()) 
+                Thread.sleep(50);
+            }
+
+            for(Tuple<Integer, Double> t: FileIO.readExecTimes("durations.txt"))
+              series.getData().add(new XYChart.Data<String, Number>(t.k.toString(), t.v));
+            
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
+      });
+    
     series.setName("Time Monitoring");
     lineChart.getData().add(series);
-       
-    root.setHgap(30);
-    root.setVgap(5);
-    root.setPadding(new Insets(10));
-    root.getChildren().addAll(range, rangeSpinner, step, stepSpinner, analyzeButton, lineChart);
+    lineChart.setTranslateX(20);
+    lineChart.setTranslateY(30);
+    
+    StackPane buttonsLayout = new StackPane();
+    buttonsLayout.getChildren().addAll(rangeStartLabel, rangeEndLabel, rangeStart, rangeEnd, step, stepSpinner, analyzeButton);
 
+    VBox chartLayout = new VBox();
+    chartLayout.getChildren().add(lineChart);
+    
+    Pane window = new Pane();
+    window.getChildren().addAll(chartLayout, buttonsLayout);
+    
+    Scene scene = new Scene(window, 900, 450);
+    Stage stage = new Stage();
     stage.setTitle("Analyzer");
     stage.setScene(scene);
     stage.setResizable(false);
     stage.show();
   }
   
-  public ArrayList<Point> getPoints() {
-    ArrayList<Point> points = new ArrayList<>();
+  public ArrayList<Tuple<Integer, Integer>> getPoints() {
+    ArrayList<Tuple<Integer, Integer>> points = new ArrayList<>();
     
     for(int y = 0; y < verticies.length; ++y) 
       if(!verticies[y].isEmpty())
         for(Integer x: verticies[y])
-          points.add(new Point(x, y));
+          points.add(new Tuple<Integer, Integer>(x, y));
 
     return points;
   }
   
-  public void addVertex(int x, int y) {
+  public void addVertex(Integer x, Integer y) {
     verticies[y].add(x);
     ((Circle)root.getChildren().get( y * COLUMN_NUMBER + x)).setFill(Color.BLACK);
   }
@@ -445,8 +452,8 @@ public class Grid {
     }
 
     // recoloring striner points white 
-    for(Point p: FileIO.readPoints("./steiner-points.txt"))
-      ((Circle)children.get(p.y * COLUMN_NUMBER + p.x)).setFill(Color.WHITE);
+    for(Tuple<Integer, Integer> p: FileIO.readPoints("./steiner-points.txt"))
+      ((Circle)children.get(p.v * COLUMN_NUMBER + p.k)).setFill(Color.WHITE);
         
     // case when contains circles and something else -> remove somthing
     if(children.size() > ROW_NUMBER * COLUMN_NUMBER)

@@ -1,18 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h> // added
+#include <stdio.h> // added
 #include "flute.h"
 
 // added
 double time_diff(struct timeval x , struct timeval y) { 
-    double x_ms , y_ms , diff;
+    double x_ms , y_ms;
      
     x_ms = (double)x.tv_sec*1000000 + (double)x.tv_usec;
     y_ms = (double)y.tv_sec*1000000 + (double)y.tv_usec;
-     
-    diff = (double)y_ms - (double)x_ms;
-     
-    return diff;
+    
+    return y_ms - x_ms;
 }
 
 int main()
@@ -36,8 +35,11 @@ int main()
     // printf("FLUTE wirelength (without RSMT construction) = %d\n", flutewl);
 
     gettimeofday(&endTime , NULL); //added
-    double diff = time_diff(startTime , endTime);
-    printf("%.0f", diff); //added
+
+    /*added*/
+    FILE *f = fopen("../durations.txt", "a");
+    fprintf(f, "%d %.3f\n", d, time_diff(startTime , endTime)/1000000); //added
+    fclose(f);
     
     printtree(flutetree);
     plottree(flutetree);

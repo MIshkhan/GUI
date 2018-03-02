@@ -14,11 +14,11 @@ import java.util.ArrayList;
 public class FileIO {
   private static String FILE_PATH = "./vertices.txt";
 
-  public static ArrayList<Point> readPoints() {
+  public static ArrayList<Tuple<Integer, Integer>> readPoints() {
     return readPoints(FILE_PATH);
   }
 
-  public static void writePoints(ArrayList<Point> points) {
+  public static void writePoints(ArrayList<Tuple<Integer, Integer>> points) {
     writePoints(FILE_PATH, points);
   }
 
@@ -29,9 +29,9 @@ public class FileIO {
   public static void cleanFile() {
     cleanFile(FILE_PATH);
   }
-  
-  public static ArrayList<Point> readPoints(String filePath) {
-    ArrayList<Point> points = new ArrayList<>();
+
+  public static ArrayList<Tuple<Integer, Double>> readExecTimes(String filePath) {
+    ArrayList<Tuple<Integer, Double>> execTimes = new ArrayList<>();
     
     try {
       File f = new File(filePath);
@@ -40,7 +40,26 @@ public class FileIO {
       
       while ((readLine = b.readLine()) != null) {
         String[] strArray = readLine.split(" ");
-        points.add(new Point(Integer.parseInt(strArray[0]), Integer.parseInt(strArray[1])));
+        execTimes.add(new Tuple<Integer, Double>(Integer.parseInt(strArray[0]), Double.parseDouble(strArray[1])));
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return execTimes;
+  }
+  
+  public static ArrayList<Tuple<Integer, Integer>> readPoints(String filePath) {
+    ArrayList<Tuple<Integer, Integer>> points = new ArrayList<>();
+    
+    try {
+      File f = new File(filePath);
+      BufferedReader b = new BufferedReader(new FileReader(f));
+      String readLine = "";
+      
+      while ((readLine = b.readLine()) != null) {
+        String[] strArray = readLine.split(" ");
+        points.add(new Tuple<Integer, Integer>(Integer.parseInt(strArray[0]), Integer.parseInt(strArray[1])));
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -49,10 +68,10 @@ public class FileIO {
     return points;
   }
 
-  public static void writePoints(String filePath, ArrayList<Point> points) {
+  public static void writePoints(String filePath, ArrayList<Tuple<Integer, Integer>> points) {
     try (FileWriter fw = new FileWriter(filePath); BufferedWriter bw = new BufferedWriter(fw)) {
-      for(Point p: points)
-        bw.write(p.x + " " + p.y + "\n");
+      for(Tuple<Integer, Integer> p: points)
+        bw.write(p.k + " " + p.v + "\n");
     } catch (IOException e) {
       e.printStackTrace();
     } 
