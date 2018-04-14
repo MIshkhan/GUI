@@ -37,8 +37,8 @@ public class Grid {
   private final double START_X = 0;
   private final double START_Y = 0;
   
-  private final int ROW_NUMBER = 40;
-  private final int COLUMN_NUMBER = 120;
+  private final int ROW_NUMBER = 70;
+  private final int COLUMN_NUMBER = 150;
 
   private final int CELL_WIDTH = 10;
   private final int CELL_HEIGHT = 10;
@@ -49,7 +49,6 @@ public class Grid {
   
   private Group root = new Group();
   private StackPane zoomPane = null;
-  private GridPane daddy = new GridPane();
 
   private ArrayList<Integer>[] verticies = new ArrayList[ROW_NUMBER];
   
@@ -59,12 +58,11 @@ public class Grid {
 
     makeGrid();
     
-    for(Tuple<Integer, Integer>p: FileIO.readPoints())
+    for(Tuple<Integer, Integer> p: FileIO.readPoints())
       addVertex(p.k, p.v);
   }
 
   private void makeGrid() {
-      
     double radius = CELL_WIDTH / 5;
     for( int i = 0; i < ROW_NUMBER; ++i ) {
       double y = START_Y + i * CELL_HEIGHT;
@@ -88,32 +86,44 @@ public class Grid {
         root.getChildren().add(circle);
       }
     }
-    
   }
   
   public Parent createZoomPane() {
+    // root.setScaleX(5.5);
+    // root.setScaleY(5.5);
     
-    Slider slider = new Slider(1, 10.0, 5.5);
+    GridPane header = new GridPane();
+    header.add(getMenuBar(), 0, 0);
 
+    ScrollBar vScrol = new ScrollBar();
+    vScrol.setOrientation(Orientation.VERTICAL);
+    vScrol.valueProperty().addListener(new ChangeListener<Number>() {
+        public void changed(ObservableValue<? extends Number> ov, Number old_val, Number new_val) {
+          root.setTranslateY(-new_val.doubleValue());
+        }});
+    
+    ScrollBar hScrol = new ScrollBar();
+    hScrol.setOrientation(Orientation.HORIZONTAL);
+    hScrol.valueProperty().addListener(new ChangeListener<Number>() {
+        public void changed(ObservableValue<? extends Number> ov, Number old_val, Number new_val) {
+          root.setTranslateX(-new_val.doubleValue());
+        }});
+
+    Slider slider = new Slider(1, 10.0, 1);
+    
     zoomPane = new StackPane();
+    zoomPane.setMaxSize(COLUMN_NUMBER * CELL_WIDTH, ROW_NUMBER * CELL_HEIGHT);
     zoomPane.setStyle("-fx-background-color: #669994");
-
     zoomPane.getChildren().add(root);
-
-    //root.resize(500, 500);
-    root.setScaleX(5.5);
-    root.setScaleY(5.5);
-
+    
     zoomPane.setOnScroll(new EventHandler<ScrollEvent>() {
         @Override public void handle(ScrollEvent event) {
           event.consume();
 
-          if (event.getDeltaY() == 0) {
+          if (event.getDeltaY() == 0) 
             return;
-          }
-
-          double scaleFactor = (event.getDeltaY() > 0) ? SCALE_DELTA : 1/SCALE_DELTA;
-
+          
+          double scaleFactor = (event.getDeltaY() > 0) ? SCALE_DELTA : 1 / SCALE_DELTA;
           double scaleX = root.getScaleX() * scaleFactor;
           double scaleY = root.getScaleY() * scaleFactor;
 
@@ -135,34 +145,23 @@ public class Grid {
 
     slider.valueProperty().addListener(new ChangeListener<Number>() {
         public void changed(ObservableValue<? extends Number> ov, Number old_val, Number new_val) {
-          double scaleFactor = 1.1;//(slider.getValue()  > 5) ? 1.1: 1/1.1;
-          root.setScaleX(slider.getValue() * scaleFactor);
-          root.setScaleY(slider.getValue() * scaleFactor);
-          //System.out.println(new_val.doubleValue());
+          double scale = 1.1 * slider.getValue();
+          root.setScaleX(scale);
+          root.setScaleY(scale);
         }
       });
-     
-    GridPane header = new GridPane();
-    GridPane footer = new GridPane();
-    Button clearButton = new Button("Clean grid");
-
-    clearButton.setOnAction((event) -> cleanGrid());
     
-    header.add(getMenuBar(), 0, 0);
+    slider.setTranslateX(1100);
+
+    Button clearButton = new Button("Clean grid");
+    clearButton.setTranslateX(1400);
+    clearButton.setOnAction((event) -> cleanGrid());
+
+    GridPane footer = new GridPane();
     footer.add(clearButton, 0, 0);
     footer.add(slider, 1, 0);
-
-    ScrollBar vScrol = new ScrollBar();
-    ScrollBar hScrol = new ScrollBar();
-    vScrol.setOrientation(Orientation.VERTICAL);
-    hScrol.setOrientation(Orientation.HORIZONTAL);
-
-    hScrol.setLayoutX(zoomPane.getWidth()-hScrol.getWidth());
-    hScrol.valueProperty().addListener(new ChangeListener<Number>() {
-        public void changed(ObservableValue<? extends Number> ov, Number old_val, Number new_val) {
-          zoomPane.setLayoutY(-new_val.doubleValue());
-        }});
-      
+    
+    GridPane daddy = new GridPane();
     daddy.add(header,   0, 0);
     daddy.add(zoomPane, 0, 1);
     daddy.add(hScrol,   0, 2);
@@ -190,13 +189,11 @@ public class Grid {
 
     mb.getMenus().add(fileMenu);
 
-
     Menu view = new Menu("View");
     Menu backgrounds = new Menu("Backgrounds");
     MenuItem skyBlue = new MenuItem("Sky-blue");
     MenuItem green = new MenuItem("Green");
-    MenuItem black = new MenuItem("Black");
-    backgrounds.getItems().addAll(skyBlue, green, black);
+    backgrounds.getItems().addAll(skyBlue, green);
     view.getItems().add(backgrounds);
 
     mb.getMenus().add(view);
@@ -208,7 +205,6 @@ public class Grid {
     run.getItems().addAll(steiner, generator, analyzer);
 
     mb.getMenus().add(run);
-
 
     // Create the Help menu.
     Menu helpMenu = new Menu("Help");
@@ -224,7 +220,6 @@ public class Grid {
           switch (name) {
           case "Sky-blue" : zoomPane.setStyle("-fx-background-color: #87CEEB"); break;
           case "Green"    : zoomPane.setStyle("-fx-background-color: #669994"); break;
-          case "Black"    : zoomPane.setStyle("-fx-background-color: #242020"); break;
           case "Open"     : // for(Point p: FileIO.readPoints()) addVertex(p.k, p.v); break;
           case "Steiner"  : runSteiner(); break;
           case "Generator": runGenerator(); break;
@@ -372,7 +367,9 @@ public class Grid {
     analyzeButton.setTranslateY(y + 3 * dY);
     
     CategoryAxis xAxis = new CategoryAxis();
+    xAxis.setLabel("Pins");
     NumberAxis yAxis = new NumberAxis();       
+    yAxis.setLabel("Seconds");
     LineChart<String,Number> lineChart = new LineChart<String,Number>(xAxis,yAxis);
                                                
     XYChart.Series<String,Number> series = new XYChart.Series<String,Number>();
@@ -400,7 +397,11 @@ public class Grid {
             
           } catch (Exception e) {
             e.printStackTrace();
+            FileIO.cleanFile("./steiner-points.txt");
+            FileIO.cleanFile("./mst-edges.txt");
           }
+          FileIO.cleanFile("./steiner-points.txt");
+          FileIO.cleanFile("./mst-edges.txt");
         }
       });
     
@@ -459,17 +460,17 @@ public class Grid {
     if(children.size() > ROW_NUMBER * COLUMN_NUMBER)
       children.remove(ROW_NUMBER * COLUMN_NUMBER, children.size());
         
-    FileIO.cleanFile();
-    FileIO.cleanFile("./steiner-points.txt");
+    FileIO.cleanFile("./vertices.txt");
     FileIO.cleanFile("./mst-edges.txt");
+    FileIO.cleanFile("./steiner-points.txt");
   }
   
   public double getWindowHeight() {
-    return 900;
+    return 775;
   }
 
   public double getWindowWidth() {
-    return 1600;
+    return 1510;
   }
   
 }
