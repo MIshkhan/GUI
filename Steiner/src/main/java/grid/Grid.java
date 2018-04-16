@@ -392,7 +392,6 @@ public class Grid {
 
           try {
             for(; rStart <= rEnd; rStart += delta) {
-              System.out.println(rStart +  ":" + rEnd + ":" + delta);
               Process process = Runtime.getRuntime().exec("./flute-time.sh " + rStart);
               
               while(process.isAlive()) 
