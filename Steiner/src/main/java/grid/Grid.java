@@ -1,9 +1,11 @@
 package graph;
 
 import javafx.scene.*;
+import javafx.scene.text.*;
 import javafx.stage.Stage;
 
 import javafx.scene.shape.*;
+import javafx.scene.image.*;
 import javafx.scene.paint.Color;
 
 import javafx.scene.input.*;
@@ -18,9 +20,7 @@ import javafx.scene.chart.CategoryAxis;
 import javafx.event.*;
 import javafx.beans.value.*;
 
-import javafx.geometry.Bounds;
-import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
+import javafx.geometry.*;
 
 import javafx.application.Platform;
 
@@ -51,8 +51,12 @@ public class Grid {
   private StackPane zoomPane = null;
 
   private ArrayList<Integer>[] verticies = new ArrayList[ROW_NUMBER];
+  private Text wirelength;
   
   public Grid() {
+    wirelength = new Text("Wirelength: 0");
+    wirelength.setFont(new Font(15));
+    
     for(int i = 0; i < ROW_NUMBER; ++i) 
       verticies[i] = new ArrayList<Integer>();
 
@@ -89,12 +93,6 @@ public class Grid {
   }
   
   public Parent createZoomPane() {
-    // root.setScaleX(5.5);
-    // root.setScaleY(5.5);
-    
-    GridPane header = new GridPane();
-    header.add(getMenuBar(), 0, 0);
-
     ScrollBar vScrol = new ScrollBar();
     vScrol.setOrientation(Orientation.VERTICAL);
     vScrol.valueProperty().addListener(new ChangeListener<Number>() {
@@ -151,41 +149,34 @@ public class Grid {
         }
       });
     
-    slider.setTranslateX(1100);
-
-    Button clearButton = new Button("Clean grid");
-    clearButton.setTranslateX(1400);
-    clearButton.setOnAction((event) -> cleanGrid());
-
-    GridPane footer = new GridPane();
-    footer.add(clearButton, 0, 0);
-    footer.add(slider, 1, 0);
+    StackPane footer = new StackPane();
+    HBox hBox = new HBox();
+    hBox.setAlignment(Pos.TOP_RIGHT);
+    hBox.setSpacing(20);
+    hBox.getChildren().addAll(wirelength, slider);
+    footer.setMargin(hBox, new Insets(20, 0, 0, 0));
+    footer.setMargin(hScrol, new Insets(0, 0, 100, 0)); 
+    footer.getChildren().addAll(hScrol, hBox);
+      
+    BorderPane mainWindow = new BorderPane();
+    mainWindow.setTop(getMenuBar());
+    mainWindow.setCenter(zoomPane);
+    mainWindow.setRight(vScrol);
+    mainWindow.setBottom(footer);
     
-    GridPane daddy = new GridPane();
-    daddy.add(header,   0, 0);
-    daddy.add(zoomPane, 0, 1);
-    daddy.add(hScrol,   0, 2);
-    daddy.add(footer,   0, 3);
-    daddy.add(vScrol,   1, 1);
-    
-    daddy.setGridLinesVisible(true);
-    
-    return daddy;
+    return mainWindow;
   }
 
-  public BorderPane getMenuBar() {
-    BorderPane rootNode = new BorderPane();
-    Label response = new Label("Menu Demo");
-
-    // Create the menu bar.
+  public MenuBar getMenuBar() {
     MenuBar mb = new MenuBar();
 
     // Create the File menu.
     Menu fileMenu = new Menu("File");
     MenuItem open = new MenuItem("Open");
     MenuItem save = new MenuItem("Save");
+    MenuItem clear = new MenuItem("Clear");
     MenuItem exit = new MenuItem("Exit");
-    fileMenu.getItems().addAll(open, save, new SeparatorMenuItem(), exit);
+    fileMenu.getItems().addAll(open, save, clear, new SeparatorMenuItem(), exit);
 
     mb.getMenus().add(fileMenu);
 
@@ -220,7 +211,8 @@ public class Grid {
           switch (name) {
           case "Sky-blue" : zoomPane.setStyle("-fx-background-color: #87CEEB"); break;
           case "Green"    : zoomPane.setStyle("-fx-background-color: #669994"); break;
-          case "Open"     : // for(Point p: FileIO.readPoints()) addVertex(p.k, p.v); break;
+          case "Open"     : /* for(Point p: FileIO.readPoints()) addVertex(p.k, p.v);*/ break;
+          case "Clear"    : cleanGrid(); break;
           case "Steiner"  : runSteiner(); break;
           case "Generator": runGenerator(); break;
           case "Analyzer" : runAnalyzer(); break; 
@@ -232,12 +224,11 @@ public class Grid {
     fileMenu.setOnAction(MEHandler);
     backgrounds.setOnAction(MEHandler);
     run.setOnAction(MEHandler);
-    helpMenu.setOnAction(MEHandler);
-      
-    rootNode.setTop(mb);
-    return  rootNode;
+    helpMenu.setOnAction(MEHandler);  
+    
+    return mb;
   }
-
+  
   public void runSteiner() {
     try {
       FileIO.writePoints(getPoints());
@@ -273,8 +264,24 @@ public class Grid {
         }
       }
 
-      for(Tuple<Integer, Integer> sp: sPoints)
-        ((Circle)root.getChildren().get( sp.v * COLUMN_NUMBER + sp.k)).setFill(Color.RED);
+      for(Tuple<Integer, Integer> sp: sPoints) {
+        Circle steinerPoint = ((Circle)root.getChildren().get( sp.v * COLUMN_NUMBER + sp.k)); 
+        steinerPoint.setFill(Color.RED);
+        steinerPoint.setOnMousePressed(new EventHandler<MouseEvent>() {
+          public void handle(MouseEvent me) {
+            if (me.isPrimaryButtonDown() && steinerPoint.getFill() == Color.WHITE) { //left click
+              steinerPoint.setFill(Color.RED);
+              verticies[(int)steinerPoint.getCenterY() / 10].add( (int)steinerPoint.getCenterX() / 10 );
+            } else if (me.isSecondaryButtonDown() && steinerPoint.getFill() == Color.RED) { //right click
+                steinerPoint.setFill(Color.WHITE);
+                verticies[(int)steinerPoint.getCenterY() / 10].remove( new Integer((int)steinerPoint.getCenterX() / 10 ));
+            }
+          }
+        });
+      }
+      
+      java.util.List<Integer> wirelengths = FileIO.readWireLengths("./durations.txt");
+      wirelength.setText("Wirelength: " + wirelengths.get(wirelengths.size()-1).toString());
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -463,6 +470,9 @@ public class Grid {
     FileIO.cleanFile("./vertices.txt");
     FileIO.cleanFile("./mst-edges.txt");
     FileIO.cleanFile("./steiner-points.txt");
+    FileIO.cleanFile("./durations.txt");
+    
+    wirelength.setText("Wirelength: 0");
   }
   
   public double getWindowHeight() {

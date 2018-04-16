@@ -31,7 +31,6 @@ public class Main  extends Application {
         scene.setFill(Color.SKYBLUE);
         
         stage.setScene(scene);
-        
         stage.setResizable(false);
         stage.show();
     }

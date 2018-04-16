@@ -30,6 +30,25 @@ public class FileIO {
     cleanFile(FILE_PATH);
   }
 
+  public static ArrayList<Integer> readWireLengths(String filePath) {
+    ArrayList<Integer> wirelengths = new ArrayList<>();
+    
+    try {
+      File f = new File(filePath);
+      BufferedReader b = new BufferedReader(new FileReader(f));
+      String readLine = "";
+      
+      while ((readLine = b.readLine()) != null) {
+        String[] strArray = readLine.split(" ");
+        wirelengths.add(Integer.parseInt(strArray[2]));
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return wirelengths;
+  }
+  
   public static ArrayList<Tuple<Integer, Double>> readExecTimes(String filePath) {
     ArrayList<Tuple<Integer, Double>> execTimes = new ArrayList<>();
     

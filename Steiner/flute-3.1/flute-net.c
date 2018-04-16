@@ -30,7 +30,7 @@ int main()
     }
     readLUT();
     flutetree = flute(d, x, y, ACCURACY);
-    // printf("FLUTE wirelength = %d\n", flutetree.length);
+    /* printf("FLUTE wirelength = %d\n", flutetree.length); */
     flutewl = flute_wl(d, x, y, ACCURACY);
     // printf("FLUTE wirelength (without RSMT construction) = %d\n", flutewl);
 
@@ -38,7 +38,7 @@ int main()
 
     /*added*/
     FILE *f = fopen("../durations.txt", "a");
-    fprintf(f, "%d %.3f\n", d, time_diff(startTime , endTime)/1000000); //added
+    fprintf(f, "%d %.3f %d\n", d, time_diff(startTime , endTime)/1000000, flutetree.length); //added
     fclose(f);
     
     printtree(flutetree);
