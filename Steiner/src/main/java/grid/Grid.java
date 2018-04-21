@@ -51,6 +51,7 @@ public class Grid {
   private StackPane zoomPane = null;
 
   private ArrayList<Integer>[] verticies = new ArrayList[ROW_NUMBER];
+  private final ProgressIndicator progressIndicator = new ProgressIndicator();
   private Text wirelength;
   
   public Grid() {
@@ -199,7 +200,7 @@ public class Grid {
 
     // Create the Help menu.
     Menu helpMenu = new Menu("Help");
-    MenuItem about = new MenuItem("About");
+    MenuItem about = new MenuItem("Usage");
     helpMenu.getItems().add(about);
     mb.getMenus().add(helpMenu);
 
@@ -212,11 +213,12 @@ public class Grid {
           case "Sky-blue" : zoomPane.setStyle("-fx-background-color: #87CEEB"); break;
           case "Green"    : zoomPane.setStyle("-fx-background-color: #669994"); break;
           case "Open"     : /* for(Point p: FileIO.readPoints()) addVertex(p.k, p.v);*/ break;
-          case "Clear"    : cleanGrid(); break;
-          case "Steiner"  : runSteiner(); break;
-          case "Generator": runGenerator(); break;
-          case "Analyzer" : runAnalyzer(); break; 
-          case "Exit"     : Platform.exit();
+          case "Clear"    : cleanGrid();     break;
+          case "Steiner"  : runSteiner();    break;
+          case "Generator": runGenerator();  break;
+          case "Analyzer" : runAnalyzer();   break; 
+          case "Usage"    : help();          break; 
+          case "Exit"     : Platform.exit(); break; 
           }
         }
       };
@@ -341,6 +343,8 @@ public class Grid {
     int dX = 150;
     int y  = 150;
     int dY = 33;
+
+    progressIndicator.setProgress(-1);
     
     Label rangeStartLabel = new Label("Range start:");
     rangeStartLabel.setTranslateX(x);
@@ -372,6 +376,9 @@ public class Grid {
     Button analyzeButton = new Button("Analyze");
     analyzeButton.setTranslateX(x + 1.32 * dX);
     analyzeButton.setTranslateY(y + 3 * dY);
+
+    progressIndicator.setTranslateX(x + dX);
+    progressIndicator.setTranslateY(y + 5 * dY);
     
     CategoryAxis xAxis = new CategoryAxis();
     xAxis.setLabel("Pins");
@@ -383,6 +390,8 @@ public class Grid {
 
     analyzeButton.setOnMousePressed(new EventHandler<MouseEvent>() {
         public void handle(MouseEvent me) {
+          progressIndicator.setProgress(-1);
+          
           FileIO.cleanFile("./durations.txt");
           series.getData().clear();
             
@@ -390,17 +399,18 @@ public class Grid {
           Integer rEnd = rangeEnd.getValueFactory().getValue();
           Integer rStart = rangeStart.getValueFactory().getValue();
 
-          try {
-            for(; rStart <= rEnd; rStart += delta) {
+          try {  
+            for(; rStart <= rEnd; rStart += delta) {              
               Process process = Runtime.getRuntime().exec("./flute-time.sh " + rStart);
-              
+                    
               while(process.isAlive()) 
                 Thread.sleep(50);
             }
 
             for(Tuple<Integer, Double> t: FileIO.readExecTimes("durations.txt"))
               series.getData().add(new XYChart.Data<String, Number>(t.k.toString(), t.v));
-            
+
+            progressIndicator.setProgress(1);            
           } catch (Exception e) {
             e.printStackTrace();
             FileIO.cleanFile("./steiner-points.txt");
@@ -417,7 +427,7 @@ public class Grid {
     lineChart.setTranslateY(30);
     
     StackPane buttonsLayout = new StackPane();
-    buttonsLayout.getChildren().addAll(rangeStartLabel, rangeEndLabel, rangeStart, rangeEnd, step, stepSpinner, analyzeButton);
+    buttonsLayout.getChildren().addAll(rangeStartLabel, rangeEndLabel, rangeStart, rangeEnd, step, stepSpinner, analyzeButton, progressIndicator);
 
     VBox chartLayout = new VBox();
     chartLayout.getChildren().add(lineChart);
@@ -433,6 +443,41 @@ public class Grid {
     stage.show();
   }
   
+  public void help() {
+    VBox vBox = new VBox();
+    Text text = new Text(
+                         "                     Steiner tree calculator                     \n" +
+                         "                                                                 \n" +
+                         "   The program lets you mark pins on grid or load them from file.\n" +
+                         " After that you can calculate steiner tree. It also allows you to\n" +
+                         " analyze calculation time based on number of pins.               \n" +
+                         "                                                                 \n" +
+                         " Menus                                                           \n" +
+                         "   File                                                          \n" +
+                         "     Open          - Loads project from file                     \n" +
+                         "     Save          - Saves project in file                       \n" +
+                         "     Clear         - Clears grid of current project              \n" +
+                         "   Run                                                           \n" +
+                         "     Steiner       - Starts steiner tree calculation             \n" +
+                         "     Analyzer      - Opens analyzer tool                         \n" +
+                         "     Genrator      - Opens generator tool                        \n" +
+                         "   View                                                          \n" +
+                         "     Backgrounds   - Changes grid color                          \n" +
+                         "   Help                                                          \n" +
+                         "     Usage         - Gives info about program and its usage      \n" +
+                         "                                                                 \n" +
+                         "                                                                 \n" +
+                         "                                    Author: Ishkhan Martirosyan  \n" + 
+                         "");
+    text.setFont(Font.font("FreeMono", FontWeight.SEMI_BOLD, 14.0));
+    vBox.getChildren().add(text); 
+
+    Stage window = new Stage();
+    window.setScene(new Scene(vBox));
+    window.setTitle("Help");
+    window.show();
+  }
+
   public ArrayList<Tuple<Integer, Integer>> getPoints() {
     ArrayList<Tuple<Integer, Integer>> points = new ArrayList<>();
     
