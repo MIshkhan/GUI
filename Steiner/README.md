@@ -1,1 +1,1 @@
-# GUI
+# Steiner tree calculator
