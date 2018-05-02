@@ -294,7 +294,7 @@ public class Grid {
     FlowPane root = new FlowPane();
     Stage stage = new Stage();
     Scene scene = new Scene(root, 350, 100);
-    Label label = new Label("Vertices number:");
+    Label label = new Label("Pin number:");
     Spinner<Integer> spinner = new Spinner<Integer>(1, COLUMN_NUMBER * ROW_NUMBER, 120);
     Button generateButton = new Button("Generate");
 
@@ -332,7 +332,7 @@ public class Grid {
     root.setPadding(new Insets(10));
     root.getChildren().addAll(label, spinner, generateButton);
 
-    stage.setTitle("Vertex Generator");
+    stage.setTitle("Pin Generator");
     stage.setScene(scene);
     stage.setResizable(false);
     stage.show();
